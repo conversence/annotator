@@ -154,9 +154,10 @@
         clearTimeout(timer);
         body.removeChild(script);
         bookmarklet.load(function () {
-          // Once the Annotator has been loaded we can finally remove jQuery.
-          window.jQuery.noConflict(true);
           bookmarklet.setup();
+          Annotator = window._annotator.Annotator;
+          // Once the Annotator has been loaded we can finally remove jQuery.
+          //window.jQuery.noConflict(true);
         });
       };
 
@@ -199,13 +200,31 @@
     },
 
     setup: function () {
-      var annotator = new window.Annotator(options.target || body), namespace;
+      if (window._annotatorConfig !== undefined) {
+        options = jQuery.extend(true, options, window._annotatorConfig);
+      }
+      var root = options['root'];
+      options["externals"] = {
+        "jQuery":  root + "/static/js/lib/jquery.js",
+        "source":  root + "/static/js/lib/annotator-bookmarklet.min.js",
+        "styles":  root + "/static/css/lib/annotator.min.css"
+      };
+      if (options['store'] === undefined) {
+        options["store"] = {}  
+      }
+      options["store"]["prefix"] = root+"/api/v1/discussion/"+options["discussion"]+"/";
+      if (options['auth'] === undefined) {
+        options["auth"] = {}  
+      }
+      options["auth"]["tokenUrl"] = root + "/api/v1/token";
+
+      var annotator = new window.Annotator(options.target || body, {}), namespace;
 
       annotator
         .addPlugin('Unsupported')
         .addPlugin('Auth', this.authOptions())
-        .addPlugin('Store', this.storeOptions())
-        .addPlugin('AnnotateItPermissions', this.annotateItPermissionsOptions());
+        .addPlugin('AssemblStore', this.storeOptions());
+        //.addPlugin('AnnotateItPermissions', this.annotateItPermissionsOptions());
 
       if (this.config('tags') === true) {
           annotator.addPlugin('Tags');
@@ -224,7 +243,7 @@
       // were not there before.
       for (namespace in isLoaded) {
         if (isLoaded.hasOwnProperty(namespace) && !isLoaded[namespace]) {
-          delete window[namespace];
+          //delete window[namespace]; Fails miserably
         }
       }
 
@@ -272,6 +291,21 @@
 }(
 
 // Leave __config__ on a line of its own
-__config__
+//__config__
+{
+  "externals": {
+    "jQuery":  "http://localhost:6543/static/js/lib/jquery.js",
+    "source":  "http://localhost:6543/static/js/lib/annotator-bookmarklet.min.js",
+    "styles":  "http://localhost:6543/static/css/lib/annotator.min.css"
+  },
+  "auth": {
+    "tokenUrl": "http://localhost:6543/api/v1/token"
+  },
+  "store" : {
+    "loadFromSearch": true
+  },
+  "tags": false
+}
+
 
 , this, this.document));
