@@ -24,6 +24,7 @@ PLUGINS=\
 	plugin/markdown.coffee \
 	plugin/permissions.coffee \
 	plugin/store.coffee \
+	plugin/assembl-store.coffee \
 	plugin/tags.coffee \
 	plugin/unsupported.coffee
 
@@ -32,6 +33,7 @@ ANNOTATOR_FULL=\
 	plugin/unsupported.coffee \
 	plugin/auth.coffee \
 	plugin/store.coffee \
+	plugin/assembl-store.coffee \
 	plugin/permissions.coffee \
 	plugin/annotateitpermissions.coffee \
 	plugin/filter.coffee \
@@ -42,9 +44,7 @@ ANNOTATOR_FULL=\
 BOOKMARKLET=\
 	$(ANNOTATOR) \
 	plugin/auth.coffee \
-	plugin/store.coffee \
-	plugin/permissions.coffee \
-	plugin/annotateitpermissions.coffee \
+	plugin/assembl-store.coffee \
 	plugin/unsupported.coffee \
 	plugin/tags.coffee
 
