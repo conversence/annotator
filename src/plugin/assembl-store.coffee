@@ -48,7 +48,7 @@ class Annotator.Plugin.AssemblStore extends Annotator.Plugin
     #       'all_fields': 1
     #       'uri': 'http://this/document/only'
     #     }
-    loadFromSearch: false
+    loadFromSearch: true
 
     # This is the API endpoint. If the server supports Cross Origin Resource
     # Sharing (CORS) a full URL can be used here.
