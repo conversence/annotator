@@ -293,18 +293,6 @@
 // Leave __config__ on a line of its own
 //__config__
 {
-  "externals": {
-    "jQuery":  "http://localhost:6543/static/js/lib/jquery.js",
-    "source":  "http://localhost:6543/static/js/lib/annotator-bookmarklet.min.js",
-    "styles":  "http://localhost:6543/static/css/lib/annotator.min.css"
-  },
-  "auth": {
-    "tokenUrl": "http://localhost:6543/api/v1/token"
-  },
-  "store" : {
-    "loadFromSearch": true
-  },
-  "tags": false
 }
 
 
