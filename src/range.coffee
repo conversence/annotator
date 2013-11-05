@@ -39,8 +39,10 @@ Range.sniff = (r) ->
 # Returns the Node if found otherwise null.
 Range.nodeFromXPath = (xpath, root=document) ->
   evaluateXPath = (xp, nsResolver=null) ->
+    if not xp
+      return root
     try
-      document.evaluate('.' + xp, root, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+      document.evaluate(xp, root, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
     catch exception
       # There are cases when the evaluation fails, because the
       # HTML documents contains nodes with invalid names,
