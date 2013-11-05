@@ -133,9 +133,15 @@ Util.nodeFromXPath = (xp, root) ->
   node = root
   for step in steps
     [name, idx] = step.split "["
-    idx = if idx? then parseInt (idx?.split "]")[0] else 1
-    node = findChild node, name.toLowerCase(), idx
-
+    if idx
+      if idx.substr(0, 4) == '@id='
+        id = idx.substr(5, idx.length - 2)
+        node = document.findElementById(id)
+      else
+        idx = parseInt (idx?.split "]")[0]
+        node = findChild node, name.toLowerCase(), idx
+    else
+      node = findChild node, name.toLowerCase(), 1
   node
 
 Util.escape = (html) ->
