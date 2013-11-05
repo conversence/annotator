@@ -129,8 +129,14 @@ Util.xpathFromNode = (el, relativeRoot) ->
   result
 
 Util.nodeFromXPath = (xp, root) ->
-  r = document.evaluate(xp, root, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null)
-  return r.singleNodeValue
+  steps = xp.substring(1).split("/")
+  node = root
+  for step in steps
+    [name, idx] = step.split "["
+    idx = if idx? then parseInt (idx?.split "]")[0] else 1
+    node = findChild node, name.toLowerCase(), idx
+
+  node
 
 Util.escape = (html) ->
   html
