@@ -155,9 +155,8 @@
         body.removeChild(script);
         bookmarklet.load(function () {
           bookmarklet.setup();
-          Annotator = window._annotator.Annotator;
           // Once the Annotator has been loaded we can finally remove jQuery.
-          //window.jQuery.noConflict(true);
+          // window.jQuery.noConflict(true);
         });
       };
 
@@ -225,10 +224,10 @@
       // were not there before.
       for (namespace in isLoaded) {
         if (isLoaded.hasOwnProperty(namespace) && !isLoaded[namespace]) {
-          //delete window[namespace]; Fails miserably
+          delete window[namespace];
         }
       }
-
+      Annotator = window._annotator.Annotator;
       notification.message('Annotator is ready!', notification.status.SUCCESS);
       setTimeout(function () {
         notification.hide();
@@ -254,9 +253,10 @@
         }
 
         return target;
-      };
+      }
       if (window._annotatorConfig !== undefined) {
         options = simple_extend(options, window._annotatorConfig);
+        delete window._annotatorConfig;
       }
       var root = options['root'];
       var option_defaults = {
