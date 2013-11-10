@@ -200,24 +200,6 @@
     },
 
     setup: function () {
-      if (window._annotatorConfig !== undefined) {
-        options = jQuery.extend(true, options, window._annotatorConfig);
-      }
-      var root = options['root'];
-      options["externals"] = {
-        "jQuery":  root + "/static/js/lib/jquery.js",
-        "source":  root + "/static/js/lib/annotator-bookmarklet.min.js",
-        "styles":  root + "/static/css/lib/annotator.min.css"
-      };
-      if (options['store'] === undefined) {
-        options["store"] = {}  
-      }
-      options["store"]["prefix"] = root+"/api/v1/discussion/"+options["discussion"]+"/";
-      if (options['auth'] === undefined) {
-        options["auth"] = {}  
-      }
-      options["auth"]["tokenUrl"] = root + "/api/v1/token";
-
       var annotator = new window.Annotator(options.target || body, {}), namespace;
 
       annotator
@@ -255,6 +237,43 @@
     },
 
     init: function () {
+      function simple_extend(target, source) {
+        target = target || {};
+        var i = 1;
+
+        for ( var name in source ) {
+          var target_val = target[ name ];
+          var source_val = source[ name ];
+
+          if (target_val && typeof target_val == "object"
+             && typeof source_val == "object" ) {
+            target[ name ] = simple_extend( target_val, source_val );
+          } else {
+            target[ name ] = source_val;
+          }
+        }
+
+        return target;
+      };
+      if (window._annotatorConfig !== undefined) {
+        options = simple_extend(options, window._annotatorConfig);
+      }
+      var root = options['root'];
+      var option_defaults = {
+        externals: {
+          "jQuery":  root + "/static/js/lib/jquery.js",
+          "source":  root + "/static/js/lib/annotator-bookmarklet.min.js",
+          "styles":  root + "/static/css/lib/annotator.min.css"
+        },
+        store: {
+          prefix: root+"/api/v1/discussion/"+options["discussion"]+"/"
+        },
+        auth: {
+          tokenUrl: root + "/api/v1/token"
+        }
+      };
+      options = simple_extend(option_defaults, options);
+
       if (window._annotator.instance) {
         window._annotator.Annotator.showNotification(
           'Annotator is already loaded. Try highlighting some text to get started.'
