@@ -224,7 +224,7 @@
       // were not there before.
       for (namespace in isLoaded) {
         if (isLoaded.hasOwnProperty(namespace) && !isLoaded[namespace]) {
-          delete window[namespace];
+          //delete window[namespace];
         }
       }
       Annotator = window._annotator.Annotator;
@@ -261,8 +261,8 @@
       var root = options['root'];
       var option_defaults = {
         externals: {
-          "jQuery":  root + "/static/js/lib/jquery.js",
-          "source":  root + "/static/js/lib/annotator-bookmarklet.min.js",
+          "jQuery":  root + "/static/js/lib/jquery/jquery.js",
+          "source":  root + "/static/js/lib/annotator/annotator-bookmarklet.min.js",
           "styles":  root + "/static/css/lib/annotator.min.css"
         },
         store: {
