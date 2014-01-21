@@ -1,5 +1,11 @@
 (function (options, window, document) {
   "use strict";
+  try {
+    var a = window;
+    a = a.app.messageList.annotator;
+    if (a !== undefined)
+      return;
+  } catch (TypeError) {}
 
   var body = document.body,
       head = document.getElementsByTagName('head')[0],
