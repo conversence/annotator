@@ -3,8 +3,10 @@
   try {
     var a = window;
     a = a.app.messageList.annotator;
-    if (a !== undefined)
+    if (a !== undefined) {
+      alert("Please use this bookmarklet on a site other than Assembl.");
       return;
+    }
   } catch (TypeError) {}
 
   var body = document.body,
