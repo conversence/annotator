@@ -28,9 +28,9 @@ simpleXPathPure = (relativeRoot) ->
     name = getNodeName node
     if node.id
       # TODO Check uniqueness.
-      return "/#{name}[@id='#{node.id}']"
+      return "//#{name}[@id='#{node.id}']"
     pos = getNodePosition node
-    "#{name}[#{pos}]"
+    "/#{name}[#{pos}]"
 
   rootNode = relativeRoot
 
@@ -39,12 +39,10 @@ simpleXPathPure = (relativeRoot) ->
     while node != rootNode
       unless node?
         throw new Error "Called getPathTo on a node which was not a descendant of @rootNode. " + rootNode
-      xpath = (getPathSegment node) + '/' + xpath
-      if xpath.charAt(0) == '/'
+      xpath = (getPathSegment node) + xpath
+      if xpath.charAt(1) == '/'
         break
       node = node.parentNode
-    xpath = '/' + xpath
-    xpath = xpath.replace /\/$/, ''
     xpath
 
   jq = this.map ->

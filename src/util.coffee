@@ -121,12 +121,7 @@ Util.readRangeViaSelection = (range) ->
   sel.toString()                        # Read out the selection
 
 Util.xpathFromNode = (el, relativeRoot) ->
-  try
-    result = simpleXPathJQuery.call el, relativeRoot
-  catch exception
-    console.log "jQuery-based XPath construction failed! Falling back to manual."
-    result = simpleXPathPure.call el, relativeRoot
-  result
+  simpleXPathPure.call el, relativeRoot
 
 Util.nodeFromXPath = (xp, root) ->
   steps = xp.substring(1).split("/")
