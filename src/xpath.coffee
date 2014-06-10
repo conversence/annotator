@@ -1,9 +1,11 @@
 $ = require('./util').$
 
 evaluateXPath = (xp, root = document, nsResolver = null) ->
+  if not xp
+    return root
   try
     document.evaluate(
-      '.' + xp,
+      xp,
       root,
       nsResolver,
       XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -27,8 +29,15 @@ evaluateXPath = (xp, root = document, nsResolver = null) ->
     node = root
     for step in steps
       [name, idx] = step.split "["
-      idx = if idx? then parseInt (idx?.split "]")[0] else 1
-      node = findChild node, name.toLowerCase(), idx
+      if idx
+        if idx.substr(0, 4) == '@id='
+          id = idx.substr(5, idx.length - 2)
+          node = document.findElementById(id)
+        else
+          idx = parseInt (idx?.split "]")[0]
+          node = findChild node, name.toLowerCase(), idx
+      else
+        node = findChild node, name.toLowerCase(), 1
     node
 
 # Get xpath strings to the provided nodes relative to the provided root
@@ -126,13 +135,7 @@ getNodePosition = (node) ->
   pos
 
 fromNode = ($el, relativeRoot) ->
-  try
-    result = simpleXPathJQuery $el, relativeRoot
-  catch exception
-    console.log("jQuery-based XPath construction failed! Falling back to
-                 manual.")
-    result = simpleXPathPure $el, relativeRoot
-  result
+  simpleXPathPure.call el, relativeRoot
 
 # Public: Finds an Element Node using an XPath relative to the document root.
 #
