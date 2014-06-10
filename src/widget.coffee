@@ -1,6 +1,12 @@
+Delegator = require('./delegator')
+Util = require('./util')
+$ = Util.$
+
+
 # Public: Base class for the Editor and Viewer elements. Contains methods that
 # are shared between the two.
-class Annotator.Widget extends Delegator
+class Widget extends Delegator
+
   # Classes used to alter the widgets state.
   classes:
     hide: 'annotator-hide'
@@ -8,40 +14,73 @@ class Annotator.Widget extends Delegator
       x: 'annotator-invert-x'
       y: 'annotator-invert-y'
 
+  template: """<div></div>"""
+
+  # Default options for the plugin.
+  options:
+    # A CSS selector or Element to append the Widget to.
+    appendTo: 'body'
+
   # Public: Creates a new Widget instance.
   #
-  # element - The Element that represents the widget in the DOM.
-  # options - An Object literal of options.
-  #
-  # Examples
-  #
-  #   element = document.createElement('div')
-  #   widget  = new Annotator.Widget(element)
-  #
   # Returns a new Widget instance.
-  constructor: (element, options) ->
-    super
-    @classes = $.extend {}, Annotator.Widget.prototype.classes, @classes
+  constructor: (options) ->
+    super $(@template)[0], options
+    @classes = $.extend {}, Widget.prototype.classes, @classes
+    @options = $.extend {}, Widget.prototype.options, @options
 
-  # Public: Unbind the widget's events and remove its element from the DOM.
+  # Public: Destroy the Widget, unbinding all events and removing the element.
   #
   # Returns nothing.
   destroy: ->
-    this.removeEvents()
+    super
     @element.remove()
+
+  # Public: Renders the widget
+  render: ->
+    @element.appendTo(@options.appendTo)
+
+  # Public: Show the widget.
+  #
+  # Returns nothing.
+  show: ->
+    @element.removeClass(@classes.hide)
+
+    # invert if necessary
+    this.checkOrientation()
+
+  # Public: Hide the widget.
+  #
+  # Returns nothing.
+  hide: ->
+    $(@element).addClass(@classes.hide)
+
+  # Public: Returns true if the widget is currently displayed, false otherwise.
+  #
+  # Examples
+  #
+  #   widget.show()
+  #   widget.isShown() # => true
+  #
+  #   widget.hide()
+  #   widget.isShown() # => false
+  #
+  # Returns true if the widget is visible.
+  isShown: ->
+    not $(@element).hasClass(@classes.hide)
 
   checkOrientation: ->
     this.resetOrientation()
 
-    window   = $(Annotator.Util.getGlobal())
+    window   = $(Util.getGlobal())
     widget   = @element.children(":first")
     offset   = widget.offset()
     viewport = {
-      top:   window.scrollTop(),
+      top: window.scrollTop(),
       right: window.width() + window.scrollLeft()
     }
     current = {
-      top:   offset.top
+      top: offset.top
       right: offset.left + widget.width()
     }
 
@@ -72,7 +111,7 @@ class Annotator.Widget extends Delegator
   #
   # Returns itself for chaining.
   invertX: ->
-    @element.addClass @classes.invert.x
+    @element.addClass(@classes.invert.x)
     this
 
   # Public: Inverts the widget on the Y axis.
@@ -83,18 +122,21 @@ class Annotator.Widget extends Delegator
   #
   # Returns itself for chaining.
   invertY: ->
-    @element.addClass @classes.invert.y
+    @element.addClass(@classes.invert.y)
     this
 
   # Public: Find out whether or not the widget is currently upside down
   #
   # Returns a boolean: true if the widget is upside down
   isInvertedY: ->
-    @element.hasClass @classes.invert.y
+    @element.hasClass(@classes.invert.y)
 
   # Public: Find out whether or not the widget is currently right aligned
   #
   # Returns a boolean: true if the widget is right aligned
   isInvertedX: ->
-    @element.hasClass @classes.invert.x
+    @element.hasClass(@classes.invert.x)
 
+
+# Export the Widget object
+module.exports = Widget

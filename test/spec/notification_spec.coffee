@@ -1,13 +1,17 @@
-describe 'Annotator.Notification', ->
+Notification = require('../../src/notification')
+
+
+describe 'Notification', ->
   notification = null
 
   beforeEach ->
-    notification = new Annotator.Notification()
+    notification = new Notification()
 
   afterEach ->
     notification.element.remove()
 
-  it 'should be appended to the document.body', ->
+  it 'should be appended to the document body when needed', ->
+    notification.show('test')
     assert.equal(notification.element[0].parentNode, document.body)
 
   describe '.show()', ->
@@ -19,12 +23,19 @@ describe 'Annotator.Notification', ->
     it 'should have a class named "annotator-notice-show"', ->
       assert.isTrue(notification.element.hasClass('annotator-notice-show'))
 
+    it 'should have a class named "annotator-notice-info"', ->
+      assert.isTrue(notification.element.hasClass('annotator-notice-info'))
+
     it 'should update the notification message', ->
       assert.equal(notification.element.html(), message)
 
   describe '.hide()', ->
     beforeEach ->
+      notification.show()
       notification.hide()
 
-    it 'should not have a class named "show"', ->
-      assert.isFalse(notification.element.hasClass('show'))
+    it 'should not have a class named "annotator-notice-show"', ->
+      assert.isFalse(notification.element.hasClass('annotator-notice-show'))
+
+    it 'should not have a class named "annotator-notice-info"', ->
+      assert.isFalse(notification.element.hasClass('annotator-notice-info'))

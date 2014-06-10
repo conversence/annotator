@@ -1,3 +1,9 @@
+xpath = require('./xpath')
+Util = require('./util')
+$ = Util.$
+_t = Util.TranslationString
+
+
 Range = {}
 
 # Public: Determines the type of Range of the provided object and returns
@@ -23,81 +29,8 @@ Range.sniff = (r) ->
     console.error(_t("Could not sniff range type"))
     false
 
-# Public: Finds an Element Node using an XPath relative to the document root.
-#
-# If the document is served as application/xhtml+xml it will try and resolve
-# any namespaces within the XPath.
-#
-# xpath - An XPath String to query.
-#
-# Examples
-#
-#   node = Range.nodeFromXPath('/html/body/div/p[2]')
-#   if node
-#     # Do something with the node.
-#
-# Returns the Node if found otherwise null.
-Range.nodeFromXPath = (xpath, root=document) ->
-  evaluateXPath = (xp, nsResolver=null) ->
-    if not xp
-      return root
-    try
-      document.evaluate(xp, root, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-    catch exception
-      # There are cases when the evaluation fails, because the
-      # HTML documents contains nodes with invalid names,
-      # for example tags with equal signs in them, or something like that.
-      # In these cases, the XPath expressions will have these abominations,
-      # too, and then they can not be evaluated.
-      # In these cases, we get an XPathException, with error code 52.
-      # See http://www.w3.org/TR/DOM-Level-3-XPath/xpath.html#XPathException
-      # This does not necessarily make any sense, but this what we see
-      # happening.
-      console.log "XPath evaluation failed."
-      console.log "Trying fallback..."
-      # We have a an 'evaluator' for the really simple expressions that
-      # should work for the simple expressions we generate.
-      Util.nodeFromXPath(xp, root)
-
-  if not $.isXMLDoc document.documentElement
-    evaluateXPath xpath
-  else
-    # We're in an XML document, create a namespace resolver function to try
-    # and resolve any namespaces in the current document.
-    # https://developer.mozilla.org/en/DOM/document.createNSResolver
-    customResolver = document.createNSResolver(
-      if document.ownerDocument == null
-        document.documentElement
-      else
-        document.ownerDocument.documentElement
-    )
-    node = evaluateXPath xpath, customResolver
-
-    unless node
-      # If the previous search failed to find a node then we must try to
-      # provide a custom namespace resolver to take into account the default
-      # namespace. We also prefix all node names with a custom xhtml namespace
-      # eg. 'div' => 'xhtml:div'.
-      xpath = (for segment in xpath.split '/'
-        if segment and segment.indexOf(':') == -1
-          segment.replace(/^([a-z]+)/, 'xhtml:$1')
-        else segment
-      ).join('/')
-
-      # Find the default document namespace.
-      namespace = document.lookupNamespaceURI null
-
-      # Try and resolve the namespace, first seeing if it is an xhtml node
-      # otherwise check the head attributes.
-      customResolver  = (ns) ->
-        if ns == 'xhtml' then namespace
-        else document.documentElement.getAttribute('xmlns:' + ns)
-
-      node = evaluateXPath xpath, customResolver
-    node
-
 class Range.RangeError extends Error
-  constructor: (@type, @message, @parent=null) ->
+  constructor: (@type, @message, @parent = null) ->
     super(@message)
 
 # Public: Creates a wrapper around a range object obtained from a DOMSelection.
@@ -135,42 +68,8 @@ class Range.BrowserRange
       @tainted = true
 
     r = {}
-
-    # Look at the start
-    if @startContainer.nodeType is Node.ELEMENT_NODE
-      # We are dealing with element nodes  
-      r.start = Util.getFirstTextNodeNotBefore @startContainer.childNodes[@startOffset]
-      r.startOffset = 0
-    else
-      # We are dealing with simple text nodes
-      r.start = @startContainer
-      r.startOffset = @startOffset
-
-    # Look at the end
-    if @endContainer.nodeType is Node.ELEMENT_NODE
-      # Get specified node.
-      node = @endContainer.childNodes[@endOffset]
-
-      if node? # Does that node exist?
-        # Look for a text node either at the immediate beginning of node
-        n = node
-        while n? and (n.nodeType isnt Node.TEXT_NODE)
-          n = n.firstChild
-        if n? # Did we find a text node at the start of this element?
-          r.end = n
-          r.endOffset = 0
-
-      unless r.end?  
-        # We need to find a text node in the previous node.
-        node = @endContainer.childNodes[@endOffset - 1]
-        r.end = Util.getLastTextNodeUpTo node
-        r.endOffset = r.end.nodeValue.length
-
-    else # We are dealing with simple text nodes
-      r.end = @endContainer
-      r.endOffset = @endOffset
-
-    # We have collected the initial data.
+    this._normalizeStart(r)
+    this._normalizeEnd(r)
 
     # Now let's start to slice & dice the text elements!
     nr = {}
@@ -204,6 +103,49 @@ class Range.BrowserRange
 
     new Range.NormalizedRange(nr)
 
+  _normalizeStart: (r) ->
+    # Look at the start
+    if @startContainer.nodeType is Node.ELEMENT_NODE
+      # We are dealing with element nodes
+      r.start = Util.getFirstTextNodeNotBefore(
+        @startContainer.childNodes[@startOffset]
+      )
+      r.startOffset = 0
+    else
+      # We are dealing with simple text nodes
+      r.start = @startContainer
+      r.startOffset = @startOffset
+
+  _normalizeEnd: (r) ->
+    # Look at the end
+    if @endContainer.nodeType is Node.ELEMENT_NODE
+      # Get specified node.
+      node = @endContainer.childNodes[@endOffset]
+
+      if node? # Does that node exist?
+        # Look for a text node either at the immediate beginning of node
+        n = node
+        while n? and (n.nodeType isnt Node.TEXT_NODE)
+          n = n.firstChild
+        if n? # Did we find a text node at the start of this element?
+          r.end = n
+          r.endOffset = 0
+
+      unless r.end?
+        # We need to find a text node in the previous sibling of the node at the
+        # given offset, if one exists, or in the previous sibling of its
+        # container.
+        if @endOffset
+          node = @endContainer.childNodes[@endOffset - 1]
+        else
+          node = @endContainer.previousSibling
+        r.end = Util.getLastTextNodeUpTo node
+        r.endOffset = r.end.nodeValue.length
+
+    else # We are dealing with simple text nodes
+      r.end = @endContainer
+      r.endOffset = @endOffset
+
   # Public: Creates a range suitable for storage.
   #
   # root           - A root Element from which to anchor the serialisation.
@@ -225,7 +167,8 @@ class Range.NormalizedRange
   # other Range classes rather than manually.
   #
   # obj - An Object literal. Should have the following properties.
-  #       commonAncestor: A Element that encompasses both the start and end nodes
+  #       commonAncestor: A Element that encompasses both the start and end
+  #                       nodes
   #       start:          The first TextNode in the range.
   #       end             The last TextNode in the range.
   #
@@ -268,7 +211,7 @@ class Range.NormalizedRange
   # Convert this range into an object consisting of two pairs of (xpath,
   # character offset), which can be easily stored in a database.
   #
-  # root -           The root Element relative to which XPaths should be calculated
+  # root - The root Element relative to which XPaths should be calculated
   # ignoreSelector - A selector String of elements to ignore. For example
   #                  elements injected by the annotator.
   #
@@ -281,7 +224,7 @@ class Range.NormalizedRange
       else
         origParent = $(node).parent()
 
-      xpath = Util.xpathFromNode(origParent, root)[0]
+      path = xpath.fromNode(origParent, root)[0]
       textNodes = Util.getTextNodes(origParent)
 
       # Calculate real offset as the combined length of all the
@@ -292,7 +235,7 @@ class Range.NormalizedRange
       for n in nodes
         offset += n.nodeValue.length
 
-      if isEnd then [xpath, offset + node.nodeValue.length] else [xpath, offset]
+      if isEnd then [path, offset + node.nodeValue.length] else [path, offset]
 
     start = serialization(@start)
     end   = serialization(@end, true)
@@ -371,9 +314,13 @@ class Range.SerializedRange
 
     for p in ['start', 'end']
       try
-        node = Range.nodeFromXPath(this[p], root)
+        node = xpath.toNode(this[p], root)
       catch e
-        throw new Range.RangeError(p, "Error while finding #{p} node: #{this[p]}: " + e, e)
+        throw new Range.RangeError(
+          p,
+          "Error while finding #{p} node: #{this[p]}: " + e,
+          e
+        )
 
       if not node
         throw new Range.RangeError(p, "Couldn't find #{p} node: #{this[p]}")
@@ -387,7 +334,7 @@ class Range.SerializedRange
 
       # Range excludes its endpoint because it describes the boundary position.
       # Target the string index of the last character inside the range.
-      if p is 'end' then targetOffset--
+      if p is 'end' then targetOffset -= 1
 
       for tn in Util.getTextNodes($(node))
         if (length + tn.nodeValue.length > targetOffset)
@@ -401,11 +348,16 @@ class Range.SerializedRange
       # 'startOffset'/'endOffset', the element has shorter content than when
       # we annotated, so throw an error:
       if not range[p + 'Offset']?
-        throw new Range.RangeError("#{p}offset", "Couldn't find offset #{this[p + 'Offset']} in element #{this[p]}")
+        throw new Range.RangeError(
+          "#{p}offset",
+          "Couldn't find offset #{this[p + 'Offset']} in element #{this[p]}"
+        )
 
     # Here's an elegant next step...
     #
-    #   range.commonAncestorContainer = $(range.startContainer).parents().has(range.endContainer)[0]
+    #   range.commonAncestorContainer = $(range.startContainer)
+    #     .parents()
+    #     .has(range.endContainer)[0]
     #
     # ...but unfortunately Node.contains() is broken in Safari 5.1.5 (7534.55.3)
     # and presumably other earlier versions of WebKit. In particular, in a
@@ -457,3 +409,7 @@ class Range.SerializedRange
       end: @end
       endOffset: @endOffset
     }
+
+
+# Export Range object.
+module.exports = Range

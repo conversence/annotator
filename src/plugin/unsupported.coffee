@@ -1,9 +1,16 @@
-# Plugin that will display a notification to the user if thier browser does
+Annotator = require('annotator')
+$ = Annotator.Util.$
+_t = Annotator._t
+
+# Plugin that will display a notification to the user if their browser does
 # not support the Annotator.
-class Annotator.Plugin.Unsupported extends Annotator.Plugin
+class Unsupported
   # Options Object, message sets the message displayed in the browser.
   options:
-    message: Annotator._t("Sorry your current browser does not support the Annotator")
+    message: _t("Sorry your current browser does not support the Annotator")
+
+  constructor: (options) ->
+    @options = $.extend(true, {}, @options, options)
 
   # Public: Checks the Annotator.supported() method and if unsupported displays
   # @options.message in a notification.
@@ -20,3 +27,7 @@ class Annotator.Plugin.Unsupported extends Annotator.Plugin
         if (window.XMLHttpRequest == undefined) and (ActiveXObject != undefined)
           $('html').addClass('ie6')
       )
+
+Annotator.Plugin.register('Unsupported', Unsupported)
+
+module.exports = Unsupported

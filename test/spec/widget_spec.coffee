@@ -1,13 +1,15 @@
-describe "Annotator.Widget", ->
+$ = require('../../src/util').$
+Widget = require('../../src/widget')
+
+describe "Widget", ->
   widget = null
 
   beforeEach ->
-    element = $('<div />')[0]
-    widget  = new Annotator.Widget(element)
+    widget  = new Widget()
 
   describe "constructor", ->
     it "should extend the Widget#classes object with child classes", ->
-      class ChildWidget extends Annotator.Widget
+      class ChildWidget extends Widget
         classes:
           customClass: 'my-custom-class'
           anotherClass: 'another-class'
@@ -23,13 +25,13 @@ describe "Annotator.Widget", ->
       })
 
   describe "invertX", ->
-    it "should add the Widget#classes.invert.x class to the Widget#element", ->
+    it "should add the Widget#classes.invert.x class to the Widget#widget", ->
       widget.element.removeClass(widget.classes.invert.x)
       widget.invertX()
       assert.isTrue(widget.element.hasClass(widget.classes.invert.x))
 
   describe "invertY", ->
-    it "should add the Widget#classes.invert.y class to the Widget#element", ->
+    it "should add the Widget#classes.invert.y class to the Widget#widget", ->
       widget.element.removeClass(widget.classes.invert.y)
       widget.invertY()
       assert.isTrue(widget.element.hasClass(widget.classes.invert.y))
@@ -47,10 +49,10 @@ describe "Annotator.Widget", ->
       assert.isTrue(widget.isInvertedX())
 
   describe "resetOrientation", ->
-    it "should remove the Widget#classes.invert classes from the Widget#element", ->
+    it "should remove the Widget#classes.invert classes from the Widget#widget", ->
       widget.element
-            .addClass(widget.classes.invert.x)
-            .addClass(widget.classes.invert.y)
+      .addClass(widget.classes.invert.x)
+      .addClass(widget.classes.invert.y)
 
       widget.resetOrientation()
       assert.isFalse(widget.element.hasClass(widget.classes.invert.x))
@@ -93,7 +95,7 @@ describe "Annotator.Widget", ->
     beforeEach ->
       {window, element} = mocks.shift()
 
-      sinon.stub(jQuery.fn, 'init').returns({
+      sinon.stub($.fn, 'init').returns({
         width: sinon.stub().returns(window.width)
         scrollTop: sinon.stub().returns(window.scrollTop)
         scrollLeft: sinon.stub().returns(window.scrollLeft)
@@ -104,14 +106,15 @@ describe "Annotator.Widget", ->
         width:  sinon.stub().returns(element.width)
       })
 
-      sinon.spy(widget, 'invertX')
-      sinon.spy(widget, 'invertY')
-      sinon.spy(widget, 'resetOrientation')
+      sinon.stub(widget, 'invertX')
+      sinon.stub(widget, 'invertY')
+      sinon.stub(widget, 'resetOrientation')
 
       widget.checkOrientation()
 
     afterEach ->
-      jQuery.fn.init.restore()
+      widget.element.children.restore()
+      $.fn.init.restore()
 
     it "should reset the widget each time", ->
       assert(widget.resetOrientation.calledOnce)

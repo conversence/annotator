@@ -1,13 +1,24 @@
-describe 'Annotator.Plugin.Tags', ->
+Annotator = require('annotator')
+Tags = require('../../../src/plugin/tags')
+$ = Annotator.Util.$
+
+
+describe 'Tags plugin', ->
+  el = null
   annotator = null
   plugin = null
 
   beforeEach ->
     el = $("<div><div class='annotator-editor-controls'></div></div>")[0]
     annotator = new Annotator($('<div/>')[0])
-    plugin = new Annotator.Plugin.Tags(el)
+    plugin = new Tags(el)
     plugin.annotator = annotator
     plugin.pluginInit()
+
+  afterEach ->
+    annotator.destroy()
+    plugin.destroy?()
+    $(el).remove()
 
   it "should parse whitespace-delimited tags into an array", ->
     str = 'one two  three\tfourFive'
@@ -76,9 +87,9 @@ describe 'Annotator.Plugin.Tags', ->
       assert.lengthOf($(field).parent(), 0)
 
 
-describe 'Annotator.Plugin.Tags.filterCallback', ->
+describe 'Tags plugin filterCallback', ->
   filter = null
-  beforeEach -> filter = Annotator.Plugin.Tags.filterCallback
+  beforeEach -> filter = Tags.filterCallback
 
   it 'should return true if all tags are matched by keywords', ->
     assert.isTrue(filter('cat dog mouse', ['cat', 'dog', 'mouse']))

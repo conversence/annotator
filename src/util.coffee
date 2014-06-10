@@ -1,3 +1,7 @@
+$ = require('jquery')
+Promise = require('es6-promise').Promise
+
+
 # I18N
 gettext = null
 
@@ -9,15 +13,27 @@ else
 
 _t = (msgid) -> gettext(msgid)
 
-unless jQuery?.fn?.jquery
-  console.error(_t("Annotator requires jQuery: have you included lib/vendor/jquery.js?"))
-
 unless JSON and JSON.parse and JSON.stringify
-  console.error(_t("Annotator requires a JSON implementation: have you included lib/vendor/json2.js?"))
-
-$ = jQuery
+  console.error(_t("Annotator requires a JSON implementation: have you included
+                    lib/vendor/json2.js?"))
 
 Util = {}
+
+
+# Provide access to our copy of jQuery
+Util.$ = $
+
+# Provide a Promise implementation
+Util.Promise = Promise
+
+# Public: Create a Gettext translated string from a message id
+#
+# Returns a String
+Util.TranslationString = _t
+
+# Send a deprecation warning to the console
+Util.deprecationWarning = (args...) ->
+  console.warn("Annotator DeprecationWarning:", args...)
 
 # Public: Flatten a nested array structure
 #
@@ -32,6 +48,7 @@ Util.flatten = (array) ->
     return flat
 
   flatten(array)
+
 
 # Public: decides whether node A is an ancestor of node B.
 #
@@ -80,7 +97,7 @@ Util.getLastTextNodeUpTo = (n) ->
       # This is an element, we need to dig in
       if n.lastChild? # Does it have children at all?
         result = Util.getLastTextNodeUpTo n.lastChild
-        if result? then return result        
+        if result? then return result
     else
       # Not a text node, and not an element node.
   # Could not find a text node in current node, go backwards
@@ -120,25 +137,6 @@ Util.readRangeViaSelection = (range) ->
   sel.addRange range.toRange()          # Select the range
   sel.toString()                        # Read out the selection
 
-Util.xpathFromNode = (el, relativeRoot) ->
-  simpleXPathPure.call el, relativeRoot
-
-Util.nodeFromXPath = (xp, root) ->
-  steps = xp.substring(1).split("/")
-  node = root
-  for step in steps
-    [name, idx] = step.split "["
-    if idx
-      if idx.substr(0, 4) == '@id='
-        id = idx.substr(5, idx.length - 2)
-        node = document.findElementById(id)
-      else
-        idx = parseInt (idx?.split "]")[0]
-        node = findChild node, name.toLowerCase(), idx
-    else
-      node = findChild node, name.toLowerCase(), 1
-  node
-
 Util.escape = (html) ->
   html
     .replace(/&(?!\w+;)/g, '&amp;')
@@ -146,27 +144,27 @@ Util.escape = (html) ->
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
 
-Util.uuid = (-> counter = 0; -> counter++)()
+Util.uuid = (-> counter = -1; -> counter += 1)()
 
 Util.getGlobal = -> (-> this)()
 
 # Return the maximum z-index of any element in $elements (a jQuery collection).
 Util.maxZIndex = ($elements) ->
   all = for el in $elements
-          if $(el).css('position') == 'static'
-            -1
-          else
-            parseInt($(el).css('z-index'), 10) or -1
+    if $(el).css('position') == 'static'
+      -1
+    else
+      parseInt($(el).css('z-index'), 10) or -1
   Math.max.apply(Math, all)
 
-Util.mousePosition = (e, offsetEl) ->
-  # If the offset element is not a positioning root use its offset parent
-  unless $(offsetEl).css('position') in ['absolute', 'fixed', 'relative']
-    offsetEl = $(offsetEl).offsetParent()[0]
-  offset = $(offsetEl).offset()
+# Returns the absolute position of the mouse relative to the top-left rendered
+# corner of the page (taking into account padding/margin/border on the body
+# element as necessary).
+Util.mousePosition = (event) ->
+  offset = $(Util.getGlobal().document.body).offset()
   {
-    top:  e.pageY - offset.top,
-    left: e.pageX - offset.left
+    top: event.pageY - offset.top,
+    left: event.pageX - offset.left,
   }
 
 # Checks to see if an event parameter is provided and contains the prevent
@@ -176,3 +174,7 @@ Util.mousePosition = (e, offsetEl) ->
 # where the existance of the parameter must be checked before calling.
 Util.preventEventDefault = (event) ->
   event?.preventDefault?()
+
+
+# Export Util object
+module.exports = Util

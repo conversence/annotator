@@ -1,3 +1,7 @@
+Annotator = require('annotator')
+$ = Annotator.Util.$
+
+
 # Public: A initialization function that sets up the Annotator and some of the
 # default plugins. Intended for use with the annotator-full package.
 #
@@ -5,11 +9,14 @@
 # although it is available directly on the Annotator instance.
 #
 # config  - An object containing config options for the AnnotateIt store.
-#             storeUrl: API endpoint for the store (default: "http://annotateit.org/api")
-#             tokenUrl: API endpoint for auth token provider (default: "http://annotateit.org/api/token")
+#             storeUrl: API endpoint for the store (default:
+#                       "http://annotateit.org/api")
+#             tokenUrl: API endpoint for auth token provider (default:
+#                       "http://annotateit.org/api/token")
 #
 # options - An object containing plugin settings to override the defaults.
-#           If a plugin is entered with a 'falsy' value, the plugin will not be loaded.
+#           If a plugin is entered with a 'falsy' value, the plugin will not be
+#           loaded.
 #
 # Examples
 #
@@ -25,11 +32,18 @@
 #   });
 #
 # Returns itself for chaining.
-Annotator::setupPlugins = (config={}, options={}) ->
+Annotator::setupPlugins = (config = {}, options = {}) ->
   win = Annotator.Util.getGlobal()
 
   # Set up the default plugins.
-  plugins = ['Unsupported', 'Auth', 'Tags', 'Filter', 'Store', 'AnnotateItPermissions']
+  plugins = [
+    'Unsupported',
+    'Auth',
+    'Tags',
+    'Filter',
+    'AssemblStore',
+    #'AnnotateItPermissions'
+  ]
 
   # If Showdown is included add the Markdown plugin.
   if win.Showdown
@@ -47,7 +61,7 @@ Annotator::setupPlugins = (config={}, options={}) ->
       ]
     Auth:
       tokenUrl: config.tokenUrl or 'http://annotateit.org/api/token'
-    Store:
+    AssemblStore:
       prefix: config.storeUrl or 'http://annotateit.org/api'
       annotationData:
         uri: uri

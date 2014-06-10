@@ -1,19 +1,33 @@
-describe 'Annotator.Plugin.Markdown', ->
+Annotator = require('annotator')
+Markdown = require('../../../src/plugin/markdown')
+$ = Annotator.Util.$
+
+
+describe 'Markdown plugin', ->
   input  = 'Is **this** [Markdown](http://daringfireball.com)?'
   output = '<p>Is <strong>this</strong> <a href="http://daringfireball.com">Markdown</a>?</p>'
+  annotator = null
   plugin = null
 
-
   beforeEach ->
-    plugin = new Annotator.Plugin.Markdown($('<div />')[0])
+    plugin = new Markdown($('<div/>')[0])
+    plugin.annotator = annotator = {}
 
-  describe "events", ->
-    it "should call Markdown#updateTextField() when annotationViewerTextField event is fired", ->
+    BackboneEvents = require('backbone-events-standalone')
+    BackboneEvents.mixin(annotator)
+
+    sinon.spy(Markdown::, 'updateTextField')
+    plugin.pluginInit()
+
+  afterEach ->
+    Markdown::updateTextField.restore()
+    plugin.destroy()
+
+  describe "#updateTextField()", ->
+    it "should be called when annotationViewerTextField event is fired", ->
       field = $('<div />')[0]
       annotation = {text: 'test'}
-
-      sinon.spy(plugin, 'updateTextField')
-      plugin.publish('annotationViewerTextField', [field, annotation])
+      annotator.trigger('annotationViewerTextField', field, annotation)
       assert.isTrue(plugin.updateTextField.calledWith(field, annotation))
 
   describe "constructor", ->
@@ -26,7 +40,7 @@ describe 'Annotator.Plugin.Markdown', ->
       converter = Showdown.converter
       Showdown.converter = null
 
-      plugin = new Annotator.Plugin.Markdown($('<div />')[0])
+      plugin = new Markdown($('<div />')[0])
       assert(console.error.calledOnce)
 
       Showdown.converter = converter

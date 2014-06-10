@@ -1,4 +1,10 @@
-Date::toISO8601String = DateToISO8601String
+h = require('helpers')
+Util = require('../../../src/util')
+Auth = require('../../../src/plugin/auth')
+$ = Util.$
+
+
+Date::toISO8601String = h.DateToISO8601String
 
 B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 
@@ -60,60 +66,54 @@ makeToken = () ->
     encodedToken: 'header.' + base64UrlEncode(JSON.stringify(rawToken)) + '.signature'
   }
 
-describe 'Annotator.Plugin.Auth', ->
-  mock = null
+describe 'Auth plugin', ->
+
+  auth = null
   rawToken = null
   encodedToken = null
 
-  mockAuth = (options) ->
-    el = $('<div></div>')[0]
-    a = new Annotator.Plugin.Auth(el, options)
-
-    {
-      elem: el,
-      auth: a
-    }
-
   beforeEach ->
     {rawToken, encodedToken} = makeToken()
-    mock = mockAuth({token: encodedToken, autoFetch: false})
+    auth = new Auth({token: encodedToken, autoFetch: false})
+    auth.annotator =
+      store:
+        setHeader: sinon.spy()
+    auth.pluginInit()
 
   it "uses token supplied in options by default", ->
-    assert.equal(mock.auth.token, encodedToken)
+    assert.equal(auth.token, encodedToken)
 
   xit "makes an ajax request to tokenUrl to retrieve token otherwise"
 
-  it "sets annotator:headers data on its element with token data", ->
-    data = $(mock.elem).data('annotator:headers')
-    assert.isNotNull(data)
-    assert.equal(data['x-annotator-auth-token'], encodedToken)
+  it "sets a custom store header with token data", ->
+    assert.isTrue(auth.annotator.store.setHeader.calledWith('x-annotator-auth-token', encodedToken))
 
   it "should call callbacks given to #withToken immediately if it has a valid token", ->
     callback = sinon.spy()
-    mock.auth.withToken(callback)
+    auth.withToken(callback)
     assert.isTrue(callback.calledWith(rawToken))
 
   xit "should call callbacks given to #withToken after retrieving a token"
 
   describe "#haveValidToken", ->
     it "returns true when the current token is valid", ->
-      assert.isTrue(mock.auth.haveValidToken())
+      assert.isTrue(auth.haveValidToken())
 
     it "returns false when the current token is missing a consumerKey", ->
-      delete mock.auth._unsafeToken.consumerKey
-      assert.isFalse(mock.auth.haveValidToken())
+      delete auth._unsafeToken.consumerKey
+      assert.isFalse(auth.haveValidToken())
 
     it "returns false when the current token is missing an issuedAt", ->
-      delete mock.auth._unsafeToken.issuedAt
-      assert.isFalse(mock.auth.haveValidToken())
+      delete auth._unsafeToken.issuedAt
+      assert.isFalse(auth.haveValidToken())
 
     it "returns false when the current token is missing a ttl", ->
-      delete mock.auth._unsafeToken.ttl
-      assert.isFalse(mock.auth.haveValidToken())
+      delete auth._unsafeToken.ttl
+      assert.isFalse(auth.haveValidToken())
 
     it "returns false when the current token expires in the past", ->
-      mock.auth._unsafeToken.ttl = 0
-      assert.isFalse(mock.auth.haveValidToken())
-      mock.auth._unsafeToken.ttl = 86400
-      mock.auth._unsafeToken.issuedAt = "1970-01-01T00:00"
-      assert.isFalse(mock.auth.haveValidToken())
+      auth._unsafeToken.ttl = 0
+      assert.isFalse(auth.haveValidToken())
+      auth._unsafeToken.ttl = 86400
+      auth._unsafeToken.issuedAt = "1970-01-01T00:00"
+      assert.isFalse(auth.haveValidToken())

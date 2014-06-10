@@ -1,3 +1,9 @@
+h = require('helpers')
+
+Range = require('../../src/range')
+Util = require('../../src/util')
+$ = Util.$
+
 testData = [
   [ 0,           13,  0,           27,  "habitant morbi",                                    "Partial node contents." ]
   [ 0,           0,   0,           37,  "Pellentesque habitant morbi tristique",             "Full node contents, textNode refs." ]
@@ -23,7 +29,8 @@ testData = [
   [ "/div[2]/text()[2]",0,"/div[2]",7,"Lorem sed do eiusmod tempor.",                        "Text between br tags, with <br/><p><br/></p><br/> at end"]
   [ "/div[2]",   3,"/div[2]/text()[2]",28,"Lorem sed do eiusmod tempor.",                    "Text between br tags, elementNode ref at start"]
   [ "/div[2]",   2,"/div[2]/text()[2]",28,"Lorem sed do eiusmod tempor.",                    "Text between br tags, with <p><br/></p> at the start"]
-  [ "/div[2]",   1,"/div[2]/text()[2]",28,"Lorem sed do eiusmod tempor.",                    "Text between br tags, with <br/><p><br/></p> at the start"]
+  [ "/div[2]",   1,"/div[2]/text()[2]",28,"Lorem sed do eiusmod tempor.",                    "Text between br tags, with <br/><p><br/></p> at the start"],
+  [ "/h2[2]",    0,"/p[4]", 0, "Header Level 2\n\n\n  Mauris lacinia ipsum nulla, id iaculis quam egestas quis.\n\n\n", "No text node at the end and offset 0"]
 ]
 
 describe 'Range', ->
@@ -31,29 +38,17 @@ describe 'Range', ->
   mockSelection = null
 
   beforeEach ->
-    addFixture('range')
-    mockSelection = (ii) -> new MockSelection(fix(), testData[ii])
+    h.addFixture('range')
+    mockSelection = (ii) -> new h.MockSelection(h.fix(), testData[ii])
 
   afterEach ->
     delete a
-    clearFixtures()
-
-  describe ".nodeFromXPath()", ->
-    xpath = if window.require then "/html/body/p/strong" else "/html/body/div/p/strong"
-    it "should parse a standard xpath string", ->
-      node = Range.nodeFromXPath xpath
-      assert.equal(node, $('strong')[0])
-
-    it "should parse an standard xpath string for an xml document", ->
-      Annotator.$.isXMLDoc = -> true
-      node = Range.nodeFromXPath xpath
-      assert.equal(node, $('strong')[0])
+    h.clearFixtures()
 
   describe "SerializedRange", ->
     beforeEach ->
-        
-      # This is needed so that we can read ranges via selection API  
-      $(fix()).show()
+      # This is needed so that we can read ranges via selection API
+      $(h.fix()).show()
 
       r = new Range.SerializedRange
         start: "/p/strong"
@@ -62,17 +57,17 @@ describe 'Range', ->
         endOffset: 27
 
     afterEach ->
-      $(fix()).hide()        
+      $(h.fix()).hide()
 
     describe "normalize", ->
       it "should return a normalized range", ->
-        norm = r.normalize(fix())
+        norm = r.normalize(h.fix())
         assert.isTrue(norm instanceof Range.NormalizedRange)
         assert.equal(norm.text(), "habitant morbi")
 
       it "should return a normalized range with 0 offsets", ->
         r.startOffset = 0
-        norm = r.normalize(fix())
+        norm = r.normalize(h.fix())
         assert.isTrue(norm instanceof Range.NormalizedRange)
         assert.equal(norm.text(), "Pellentesque habitant morbi")
 
@@ -80,7 +75,7 @@ describe 'Range', ->
 
         # Create a normalized range to find the text node.
         # This will split text nodes.
-        norm = r.normalize fix()
+        norm = r.normalize h.fix()
 
         # We should get the usual text
         assert.equal(norm.start.data, "habitant morbi")
@@ -97,7 +92,7 @@ describe 'Range', ->
 
         # Now let's try to normalize the same range again,
         # this time working with the text nodes already split by last action
-        norm = r.normalize fix()
+        norm = r.normalize h.fix()
 
         # We should get the same text as last time:
         assert.equal(Util.readRangeViaSelection(norm), "habitant morbi")
@@ -114,7 +109,7 @@ describe 'Range', ->
         assert.isTrue(check)
 
     it "serialize() returns a serialized range", ->
-      seri = r.serialize(fix())
+      seri = r.serialize(h.fix())
       assert.equal(seri.start, "/p[1]/strong[1]")
       assert.equal(seri.startOffset, 13)
       assert.equal(seri.end, "/p[1]/strong[1]")
@@ -137,15 +132,15 @@ describe 'Range', ->
     it "normalize() returns a normalized range", ->
       norm = r.normalize()
       assert.equal(norm.start, norm.end)
-      assert.equal(textInNormedRange(norm), 'habitant morbi')
+      assert.equal(h.textInNormedRange(norm), 'habitant morbi')
 
     testBrowserRange = (i) ->
       ->
         sel   = mockSelection(i)
         range = new Range.BrowserRange(sel.getRangeAt(0))
-        norm  = range.normalize(fix())
+        norm  = range.normalize(h.fix())
 
-        assert.equal(textInNormedRange(norm), sel.expectation)
+        assert.equal(h.textInNormedRange(norm), sel.expectation)
 
     for i in [0...testData.length]
       it "should parse test range #{i} (#{testData[i][5]})", testBrowserRange(i)
