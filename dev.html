@@ -3,22 +3,6 @@
   <head>
     <meta charset="utf-8">
     <title>JS annotation test</title>
-
-    <script src="lib/vendor/jquery.js"></script><!-- dynamically provided -->
-    <!--[if lt IE 9]>
-    <script src="lib/vendor/json2.js"></script>
-    <![endif]-->
-    <script src="/lib/vendor/wgxpath.install.js"></script>
-
-    <script src="lib/annotator.js"></script>
-    <script src="lib/plugin/store.js"></script>
-    <script src="lib/plugin/permissions.js"></script>
-    <script src="lib/plugin/auth.js"></script>
-    <script src="lib/plugin/tags.js"></script>
-    <script src="lib/plugin/unsupported.js"></script>
-    <script src="lib/plugin/filter.js"></script>
-
-    <link rel="stylesheet" type="text/css" href="css/annotator.css">
     <style>
       /* This is evil but people do it. This checks that we correctly
          calculate the position of the adder and other UI elements in any
@@ -29,6 +13,7 @@
       }
       #absolute {
         border: 1px solid #eee;
+        background: #FFFFFF;
         background: rgba(255, 255, 255, 0.9);
         padding: 1em;
         margin: 0;
@@ -39,6 +24,7 @@
       }
       #fixed {
         border: 1px solid #eee;
+        background: #FFFFFF;
         background: rgba(255, 255, 255, 0.9);
         padding: 1em;
         margin: 0;
@@ -119,51 +105,16 @@
       </table>
     </div>
 
+    <script>var annotator = 'noConflictBeforeValue';</script>
+    <script src="bundle/annotator.js"></script>
+
     <script>
-      var devAnnotator;
-      var $ = require('jquery');
-      var Annotator = require('annotator');
-
       var elem = document.getElementById('airlock');
-
-      var Adder = Annotator.Plugin.fetch('Adder');
-      var TextSelector = Annotator.Plugin.fetch('TextSelector');
-      var LegacyRanges = Annotator.Plugin.fetch('LegacyRanges');
-      var Editor = Annotator.Plugin.fetch('Editor');
-      var Highlighter = Annotator.Plugin.fetch('Highlighter');
-      var Viewer = Annotator.Plugin.fetch('Viewer');
-      var Store = Annotator.Plugin.fetch('Store');
-      var Auth = Annotator.Plugin.fetch('Auth');
-      var Unsupported = Annotator.Plugin.fetch('Unsupported');
-      var Permissions = Annotator.Plugin.fetch('Permissions');
-
-      var factory = new Annotator.Factory();
-
-      var devAnnotator = factory
-        .addPlugin(Adder)
-        .addPlugin(TextSelector, elem)
-        .addPlugin(LegacyRanges, elem)
-        .addPlugin(Highlighter, elem)
-        .addPlugin(Viewer, {
-          showEditButton: true,
-          showDeleteButton: true,
-        })
-        .addPlugin(Editor)
-        .setStore(Store, {prefix: 'http://localhost:5000'})
-        .addPlugin(Auth, {tokenUrl: 'http://localhost:4000/api/token'})
-        .addPlugin(Permissions)
-        .addPlugin(Unsupported)
-        .getInstance();
-
-      devAnnotator.subscribe('beforeAnnotationCreated', function (annotation) {
-        annotation.uri = window.location.href;
-      })
-      devAnnotator.attach(elem);
-      devAnnotator.annotations.load({uri: window.location.href});
-
-      devAnnotator.on("all", function () {
-        console.log("Annotator event:", arguments);
-      });
+      var app = new annotator.App()
+      .include(annotator.ui.main, {element: elem})
+      .include(annotator.ui.filter.standalone)
+      .include(annotator.storage.debug)
+      .start()
     </script>
   </body>
 

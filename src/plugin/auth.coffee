@@ -1,4 +1,4 @@
-Annotator = require('annotator')
+Annotator = require('annotator-plugintools').Annotator
 $ = Annotator.Util.$
 
 
@@ -273,6 +273,6 @@ class Auth
       if not @requestInProgress
         this.requestToken()
 
-Annotator.Plugin.register('Auth', Auth)
+Annotator.Plugin.Auth = Auth
 
 module.exports = Auth

@@ -1,41 +1,27 @@
-vpath %.coffee src:src/plugin
+BROWSERIFY := node_modules/.bin/browserify
+UGLIFYJS := node_modules/.bin/uglifyjs
 
-ANNOTATOR_SRC := annotator.coffee
-ANNOTATOR_PKG := pkg/annotator.js pkg/annotator.css
+# Check that the user has run 'npm install'
+ifeq ($(shell which $(BROWSERIFY) >/dev/null 2>&1; echo $$?), 1)
+$(error The 'browserify' command was not found. Please ensure you have run 'npm install' before running make.)
+endif
 
-PLUGIN_SRC := $(wildcard src/plugin/*.coffee)
-PLUGIN_SRC := $(patsubst src/plugin/%,%,$(PLUGIN_SRC))
-PLUGIN_PKG := $(patsubst %.coffee,pkg/annotator.%.js,$(PLUGIN_SRC))
+# These are the plugins which are built separately and included in the
+# annotator-full build. Not all of the plugins in src/plugin are suited for this
+# at the moment.
+PLUGINS := \
+	document \
+	filter \
+	unsupported
+PLUGINS_PKG := $(patsubst %,pkg/annotator.%.js,$(PLUGINS))
 
-FULL_SRC := $(ANNOTATOR_SRC) $(PLUGIN_SRC)
-FULL_PKG := pkg/annotator-full.js pkg/annotator.css
+SRC := $(shell find src -type f -name '*.js')
 
-BOOKMARKLET_PKG := pkg/annotator-bookmarklet.js pkg/annotator.css \
-	pkg/bootstrap.js
+all: annotator plugins annotator-full
 
-MISC_PKG := pkg/package.json pkg/main.js pkg/index.js \
-	pkg/AUTHORS pkg/LICENSE-GPL pkg/LICENSE-MIT pkg/README.rst
-
-BUILD := ./tools/build
-DEPS := ./tools/build -d
-
-DEPDIR := .deps
-df = $(DEPDIR)/$(*F)
-
-PKGDIR := pkg
-
-all: annotator plugins annotator-full bookmarklet
-default: all
-
-annotator: $(ANNOTATOR_PKG)
-plugins: $(PLUGIN_PKG)
-annotator-full: $(FULL_PKG)
-bookmarklet: $(BOOKMARKLET_PKG)
-
-dist: $(ANNOTATOR_PKG) $(PLUGIN_PKG) $(FULL_PKG) $(BOOKMARKLET_PKG) $(MISC_PKG)
-	@$(eval VERSION := $(shell json version < pkg/package.json))
-	tar --transform 's,^pkg,annotator-$(VERSION),' \
-		-zcf annotator-$(VERSION).tar.gz pkg
+annotator: pkg/annotator.min.js
+plugins: $(patsubst %.js,%.min.js,$(PLUGINS_PKG))
+annotator-full: pkg/annotator-full.min.js
 
 clean:
 	rm -rf .deps pkg
@@ -46,41 +32,34 @@ test:
 develop:
 	npm start
 
-doc: docco
+doc:
 	cd doc && $(MAKE) html
-	docco src/*.coffee -o doc/_build/html/docco/
 
-# Make the docco build timestamped off the docco.css file which is regenerated
-# on every docco build. This, in concert with the next task, can ensure that we
-# don't regenerate docco docs unless the source files have actually changed.
-docco: doc/_build/html/src/docco.css
+apidoc: $(patsubst src/%.js,doc/api/%.rst,$(SRC))
 
-doc/_build/html/src/docco.css: $(wildcard src/**/*.coffee)
-	$(shell npm bin)/docco src/**/*.coffee -o doc/_build/html/src
+doc/api/%.rst: src/%.js
+	@mkdir -p $(@D)
+	tools/apidoc $< $@
 
-pkg/annotator.css: css/annotator.css
-	$(BUILD) -c
+pkg/%.min.js: pkg/%.js
+	@echo Writing $@
+	@$(UGLIFYJS) --preamble "$$(tools/preamble)" $< >$@
 
-pkg/%.js pkg/annotator.%.js: %.coffee
+pkg/annotator.js: browser.js
+	@mkdir -p pkg/ .deps/
+	@$(BROWSERIFY) -s annotator $< >$@
+	@$(BROWSERIFY) --list $< | \
+	sed 's#^#$@: #' >.deps/annotator.d
 
-pkg/%.js pkg/annotator.%.js pkg/annotator-%.js: | $(DEPDIR) $(PKGDIR)
-	$(eval $@_CMD := $(patsubst annotator.%.js,-p %.js,$(@F)))
-	$(eval $@_CMD := $(subst .js,,$($@_CMD)))
-	$(BUILD) $($@_CMD)
-	@$(DEPS) $($@_CMD) \
-		| sed -n 's/^\(.*\)/pkg\/$(@F): \1/p' \
-		| sort | uniq > $(df).d
+pkg/annotator.%.js: src/plugin/%.js
+	@mkdir -p pkg/ .deps/
+	@$(BROWSERIFY) $< >$@
+	@$(BROWSERIFY) --list $< | \
+	sed 's#^#$@: #' >.deps/annotator.$*.d
 
-$(MISC_PKG):
-	cp $(@F) pkg/
+pkg/annotator-full.js: pkg/annotator.js $(PLUGINS_PKG)
+	@cat $^ > $@
 
-$(DEPDIR) $(PKGDIR):
-	@mkdir -p $@
+-include .deps/*.d
 
--include $(DEPDIR)/*.d
-
-.PHONY: all annotator plugins annotator-full bookmarklet clean test develop \
-	dist doc docco
-
-.SECONDEXPANSION:
-$(MISC_PKG): $$(@F)
+.PHONY: all annotator plugins annotator-full clean test develop doc
