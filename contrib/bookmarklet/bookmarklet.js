@@ -270,7 +270,7 @@ If this is set to `true` the [Tags plugin][#wiki-tags] will be loaded.
       annotator
         .addPlugin('Unsupported')
         .addPlugin('Auth', this.authOptions())
-        .addPlugin('AssemblStore', this.storeOptions());
+        .addPlugin('Store', this.storeOptions());
         //.addPlugin('AnnotateItPermissions', this.annotateItPermissionsOptions());
 
       if (this.config('tags') === true) {
@@ -336,7 +336,14 @@ If this is set to `true` the [Tags plugin][#wiki-tags] will be loaded.
           "styles":  root + "/static/css/lib/annotator.min.css"
         },
         store: {
-          prefix: root+"/api/v1/discussion/"+options["discussion"]+"/"
+          prefix: root+"/api/v1/discussion/"+options["discussion"]+"/",
+          urls: {
+              create: '/extracts',
+              update: '/extracts/{id}',
+              destroy: '/extracts/{id}',
+              search: '/search_extracts'
+          }
+
         },
         auth: {
           tokenUrl: root + "/api/v1/token"
