@@ -11,7 +11,7 @@
     "es6-promise": "~0.1.1",
     "insert-css": "^0.2.0",
     "jquery": "~1.11.0",
-    "xpath-range": "https://github.com/maparent/xpath-range/tarball/assembl"
+    "xpath-range": "https://github.com/imaginationforpeople/xpath-range/tarball/assembl"
   },
   "devDependencies": {
     "assertive-chai": "^1.0.0",
