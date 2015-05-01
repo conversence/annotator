@@ -198,7 +198,13 @@
       return {
         prefix: this.config('store.prefix', 'http://annotateit.org/api'),
         annotationData: { 'uri': uri },
-        loadFromSearch: { 'uri': uri }
+        loadFromSearch: { 'uri': uri },
+        urls: {
+            create: "extracts",
+            update: "extracts/{id}",
+            destroy: "extracts/{id}",
+            search: "search_extracts"
+        }
       };
     },
 
@@ -212,7 +218,7 @@
       annotator
         .addPlugin('Unsupported')
         .addPlugin('Auth', this.authOptions())
-        .addPlugin('AssemblStore', this.storeOptions());
+        .addPlugin('Store', this.storeOptions());
         //.addPlugin('AnnotateItPermissions', this.annotateItPermissionsOptions());
 
       if (this.config('tags') === true) {
@@ -269,7 +275,7 @@
       var root = options['root'];
       var option_defaults = {
         externals: {
-          "jQuery":  root + "/static/js/bower/jquery/jquery.js",
+          "jQuery":  root + "/static/js/bower/jquery/jquery.min.js",
           "source":  root + "/static/js/lib/annotator/annotator-bookmarklet.min.js",
           "styles":  root + "/static/css/lib/annotator.min.css"
         },
@@ -317,7 +323,6 @@
   }
 }(
 
-// Leave __config__ on a line of its own
 //__config__
 {
 }

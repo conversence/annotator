@@ -4,11 +4,9 @@
 #
 # Returns Date instance.
 createDateFromISO8601 = (string) ->
-  regexp = (
-    "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
-    "(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\\.([0-9]+))?)?" +
-    "(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?"
-  )
+  regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
+           "(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\\.([0-9]+))?)?" +
+           "(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?"
 
   d = string.match(new RegExp(regexp))
 
@@ -195,12 +193,10 @@ class Annotator.Plugin.Auth extends Annotator.Plugin
   #
   # Returns true if the token is valid.
   haveValidToken: () ->
-    allFields = (
-      @_unsafeToken and
-      @_unsafeToken.issuedAt and
-      @_unsafeToken.ttl and
-      @_unsafeToken.consumerKey
-    )
+    allFields = @_unsafeToken &&
+                @_unsafeToken.issuedAt &&
+                @_unsafeToken.ttl &&
+                @_unsafeToken.consumerKey
 
     if allFields && this.timeToExpiry() > 0
       return true
