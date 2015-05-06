@@ -180,6 +180,8 @@ class Annotator extends Delegator
   #
   # Returns nothing.
   destroy: ->
+    super
+
     $(document).unbind({
       "mouseup":   this.checkForEndSelection
       "mousedown": this.checkForStartSelection
@@ -200,9 +202,8 @@ class Annotator extends Delegator
     @element.data('annotator', null)
 
     for name, plugin of @plugins
-      @plugins[name].destroy()
+      @plugins[name].destroy?()
 
-    this.removeEvents()
     idx = Annotator._instances.indexOf(this)
     if idx != -1
       Annotator._instances.splice(idx, 1)
@@ -318,6 +319,7 @@ class Annotator extends Delegator
 
     # Save the annotation data on each highlighter element.
     $(annotation.highlights).data('annotation', annotation)
+    $(annotation.highlights).attr('data-annotation-id', annotation.id)
 
     annotation
 
@@ -340,6 +342,7 @@ class Annotator extends Delegator
   # Returns annotation Object.
   updateAnnotation: (annotation) ->
     this.publish('beforeAnnotationUpdated', [annotation])
+    $(annotation.highlights).attr('data-annotation-id', annotation.id)
     this.publish('annotationUpdated', [annotation])
     annotation
 
@@ -384,7 +387,8 @@ class Annotator extends Delegator
         this.publish 'annotationsLoaded', [clone]
 
     clone = annotations.slice()
-    loader(annotations) if annotations.length
+    loader annotations
+
     this
 
   # Public: Calls the Store#dumpAnnotations() method.
@@ -569,8 +573,6 @@ class Annotator extends Delegator
 
     for range in @selectedRanges
       container = range.commonAncestor
-      if $(container).hasClass('annotator-hl')
-        container = $(container).parents('[class!=annotator-hl]')[0]
       return if this.isAnnotator(container)
 
     if event and @selectedRanges.length
@@ -595,7 +597,13 @@ class Annotator extends Delegator
   #
   # Returns true if the element is a child of an annotator element.
   isAnnotator: (element) ->
-    !!$(element).parents().addBack().filter('[class^=annotator-]').not(@wrapper).length
+    !!$(element)
+      .parents()
+      .addBack()
+      .filter('[class^=annotator-]')
+      .not('[class=annotator-hl]')
+      .not(@wrapper)
+      .length
 
   # Annotator#element callback. Displays viewer with all annotations
   # associated with highlight Elements under the cursor.
@@ -607,16 +615,20 @@ class Annotator extends Delegator
     # Cancel any pending hiding of the viewer.
     this.clearViewerHideTimer()
 
-    # Don't do anything if we're making a selection or
-    # already displaying the viewer
-    return false if @mouseIsDown or @viewer.isShown()
+    # Don't do anything if we're making a selection
+    return false if @mouseIsDown
+
+    # If the viewer is already shown, hide it first
+    @viewer.hide() if @viewer.isShown()
 
     annotations = $(event.target)
       .parents('.annotator-hl')
       .addBack()
-      .map -> return $(this).data("annotation")
+      .map( -> return $(this).data("annotation"))
+      .toArray()
 
-    this.showViewer($.makeArray(annotations), Util.mousePosition(event, @wrapper[0]))
+    # Now show the viewer with the wanted annotations
+    this.showViewer(annotations, Util.mousePosition(event, @wrapper[0]))
 
   # Annotator#element callback. Sets @ignoreMouseup to true to prevent
   # the annotation selection events firing when the adder is clicked.
@@ -720,9 +732,6 @@ class Annotator.Plugin extends Delegator
 
   pluginInit: ->
 
-  destroy: ->
-    this.removeEvents()
-
 # Sniff the browser environment and attempt to add missing functionality.
 g = Util.getGlobal()
 
@@ -780,7 +789,10 @@ $.fn.annotator = (options) ->
   this.each ->
     # check the data() cache, if it's there we'll call the method requested
     instance = $.data(this, 'annotator')
-    if instance
+    if options is 'destroy'
+      $.removeData(this, 'annotator')
+      instance?.destroy(args)
+    else if instance
       options && instance[options].apply(instance, args)
     else
       instance = new Annotator(this, options)

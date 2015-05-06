@@ -97,6 +97,16 @@ describe 'Annotator', ->
       annotator.destroy()
       assert.equal(annotator.element.find('[class^=annotator-]').length, 0)
 
+    it "should call destroy on loaded plugins", ->
+      spy = sinon.spy()
+      annotator.myPlugin = {destroy: spy}
+      annotator.destroy()
+      assert(spy)
+
+    it "should not call destroy on a plugin that has not implemented the method", ->
+      annotator.plugins.myPlugin = {}
+      assert.doesNotThrow -> annotator.destroy()
+
   describe "_setupDocumentEvents", ->
     beforeEach: ->
       $(document).unbind('mouseup').unbind('mousedown')
@@ -434,6 +444,9 @@ describe 'Annotator', ->
     it "should store the annotation in the highlighted element's data store", ->
       assert.equal(element.data('annotation'), annotation)
 
+    it "should set the data-annotation-id of the highlight element to the annotation's id", ->
+      assert.equal(element.attr('data-annotation-id'), annotation.id)
+
   describe "updateAnnotation", ->
     it "should publish the 'beforeAnnotationUpdated' and 'annotationUpdated' events", ->
       annotation = {text: "my annotation comment"}
@@ -442,6 +455,13 @@ describe 'Annotator', ->
 
       assert.isTrue(annotator.publish.calledWith('beforeAnnotationUpdated', [annotation]))
       assert.isTrue(annotator.publish.calledWith('annotationUpdated', [annotation]))
+
+    it "should set the data-annotation-id of the highlight element to the annotation's id", ->
+      highlights = $("<span>")
+      annotation = {text: "my annotation comment", id: "deadbeef"}
+      annotation.highlights = highlights
+      annotator.updateAnnotation(annotation)
+      assert.equal(highlights.attr('data-annotation-id'), annotation.id)
 
   describe "deleteAnnotation", ->
     annotation = null
@@ -799,6 +819,10 @@ describe 'Annotator', ->
       for element in elements
         assert.isFalse(annotator.isAnnotator(element))
 
+    it "should ignore the annotator highlight elements", ->
+      element = $('<span class="annotator-hl"></span>')[0]
+      assert.isFalse(annotator.isAnnotator(element))
+
   describe "onHighlightMouseover", ->
     element = null
     mockEvent = null
@@ -974,7 +998,7 @@ describe "Annotator.supported()", ->
 
   afterEach ->
     window.getSelection = window._Selection
-                
+
   it "should return true if the browser has window.getSelection method", ->
     window.getSelection = ->
     assert.isTrue(Annotator.supported())

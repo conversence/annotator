@@ -33,6 +33,7 @@ Util.flatten = (array) ->
 
   flatten(array)
 
+
 # Public: decides whether node A is an ancestor of node B.
 #
 # This function purposefully ignores the native browser function for this,
@@ -156,7 +157,9 @@ Util.maxZIndex = ($elements) ->
           if $(el).css('position') == 'static'
             -1
           else
-            parseInt($(el).css('z-index'), 10) or -1
+            # Use parseFloat since we may get scientific notation for large
+            # values.
+            parseFloat($(el).css('z-index')) or -1
   Math.max.apply(Math, all)
 
 Util.mousePosition = (e, offsetEl) ->

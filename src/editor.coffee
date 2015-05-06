@@ -243,7 +243,7 @@ class Annotator.Editor extends Annotator.Widget
       when 'input', 'checkbox' then input = $('<input />')
       when 'select' then input = $('<select />')
 
-    element.append(input);
+    element.append(input)
 
     input.attr({
       id: field.id
@@ -293,7 +293,7 @@ class Annotator.Editor extends Annotator.Widget
   #
   # Returns nothing
   onCancelButtonMouseover: =>
-    @element.find('.' + @classes.focus).removeClass(@classes.focus);
+    @element.find('.' + @classes.focus).removeClass(@classes.focus)
 
   # Sets up mouse events for resizing and dragging the editor window.
   # window events are bound only when needed and throttled to only update
@@ -335,10 +335,10 @@ class Annotator.Editor extends Annotator.Widget
           'mouseup.annotator-editor-resize':   onMouseup
           'mousemove.annotator-editor-resize': onMousemove
         })
-        event.preventDefault();
+        event.preventDefault()
 
     onMouseup = ->
-      mousedown = null;
+      mousedown = null
       $(window).unbind '.annotator-editor-resize'
 
     onMousemove = (event) =>
@@ -349,8 +349,8 @@ class Annotator.Editor extends Annotator.Widget
         }
 
         if mousedown.element == resize[0]
-          height = textarea.outerHeight()
-          width  = textarea.outerWidth()
+          height = textarea.height()
+          width  = textarea.width()
 
           directionX = if editor.hasClass(classes.invert.x) then -1 else  1
           directionY = if editor.hasClass(classes.invert.y) then  1 else -1
@@ -361,8 +361,8 @@ class Annotator.Editor extends Annotator.Widget
           # Only update the mousedown object if the dimensions
           # have changed, otherwise they have reached their minimum
           # values.
-          mousedown.top  = event.pageY unless textarea.outerHeight() == height
-          mousedown.left = event.pageX unless textarea.outerWidth()  == width
+          mousedown.top  = event.pageY unless textarea.height() == height
+          mousedown.left = event.pageX unless textarea.width()  == width
 
         else if mousedown.element == controls[0]
           editor.css({
@@ -376,7 +376,7 @@ class Annotator.Editor extends Annotator.Widget
         throttle = true;
         setTimeout(->
           throttle = false
-        , 1000/60);
+        , 1000/60)
 
     resize.bind   'mousedown', onMousedown
     controls.bind 'mousedown', onMousedown

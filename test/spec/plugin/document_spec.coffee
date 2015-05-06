@@ -22,6 +22,8 @@ describe 'Annotator.Plugin.Document', ->
     head.append('<link rel="alternate" href="foo.pdf" type="application/pdf"></link>')
     head.append('<link rel="alternate" href="foo.doc" type="application/msword"></link>')
     head.append('<link rel="bookmark" href="http://example.com/bookmark"></link>')
+    head.append('<link rel="shortlink" href="http://example.com/bookmark/short"></link>')
+    head.append('<link rel="alternate" href="es/foo.html" hreflang="es" type="text/html"></link>')
     head.append('<meta name="citation_doi" content="10.1175/JCLI-D-11-00015.1">')
     head.append('<meta name="citation_title" content="Foo">')
     head.append('<meta name="citation_pdf_url" content="foo.pdf">')
@@ -33,6 +35,7 @@ describe 'Annotator.Plugin.Document', ->
     head.append('<link rel="icon" href="http://example.com/images/icon.ico"></link>')
     head.append('<meta name="eprints.title" content="Computer Lib / Dream Machines">')
     head.append('<meta name="prism.title" content="Literary Machines">')
+    head.append('<link rel="alternate" href="feed" type="application/rss+xml"></link>')
 
     annotation = null
 
@@ -50,7 +53,7 @@ describe 'Annotator.Plugin.Document', ->
 
     it 'should have links with absoulte hrefs and types', ->
       assert.ok(annotation.document.link)
-      assert.equal(annotation.document.link.length, 7)
+      assert.equal(annotation.document.link.length, 8)
       assert.match(annotation.document.link[0].href, /^.+runner.html(\?.*)?$/)
       assert.equal(annotation.document.link[1].rel, "alternate")
       assert.match(annotation.document.link[1].href, /^.+foo\.pdf$/)
@@ -60,10 +63,15 @@ describe 'Annotator.Plugin.Document', ->
       assert.equal(annotation.document.link[2].type, "application/msword")
       assert.equal(annotation.document.link[3].rel, "bookmark")
       assert.equal(annotation.document.link[3].href, "http://example.com/bookmark")
-      assert.equal(annotation.document.link[4].href, "doi:10.1175/JCLI-D-11-00015.1")
-      assert.match(annotation.document.link[5].href, /.+foo\.pdf$/)
-      assert.equal(annotation.document.link[5].type, "application/pdf")
-      assert.equal(annotation.document.link[6].href, "doi:10.1175/JCLI-D-11-00015.1")
+      assert.equal(annotation.document.link[4].rel, "shortlink")
+      assert.equal(annotation.document.link[4].href, "http://example.com/bookmark/short")
+      assert.equal(annotation.document.link[5].href, "doi:10.1175/JCLI-D-11-00015.1")
+      assert.match(annotation.document.link[6].href, /.+foo\.pdf$/)
+      assert.equal(annotation.document.link[6].type, "application/pdf")
+      assert.equal(annotation.document.link[7].href, "doi:10.1175/JCLI-D-11-00015.1")
+
+    it 'should ignore atom and RSS feeds and alternate languages', ->
+      assert.equal(annotation.document.link.length, 8)
 
     it 'should have highwire metadata', ->
       assert.ok(annotation.document.highwire)
@@ -94,7 +102,7 @@ describe 'Annotator.Plugin.Document', ->
     
     it 'should have unique uris', ->
       uris = annotator.plugins.Document.uris()
-      assert.equal(uris.length, 5)
+      assert.equal(uris.length, 6)
 
     it 'should have a favicon', ->
       assert.equal(
@@ -102,3 +110,36 @@ describe 'Annotator.Plugin.Document', ->
         'http://example.com/images/icon.ico'
       )
 
+  describe '#_absoluteUrl', ->
+    plugin = null
+
+    beforeEach ->
+      plugin = annotator.plugins.Document
+
+    it 'should add the protocol when the url starts with two slashes', ->
+      result = plugin._absoluteUrl('//example.com/')
+      expected = "#{document.location.protocol}//example.com/"
+      assert.equal(result, expected)
+
+    it 'should add a trailing slash when given an empty path', ->
+      result = plugin._absoluteUrl('http://example.com')
+      assert.equal(result, 'http://example.com/')
+
+    it 'should make a relative path into an absolute url', ->
+      result = plugin._absoluteUrl('path')
+      expected = (
+        document.location.protocol + '//' +
+        document.location.host +
+        document.location.pathname.replace(/[^\/]+$/, '') +
+        'path'
+      )
+      assert.equal(result, expected)
+
+    it 'should make an absolute path into an absolute url', ->
+      result = plugin._absoluteUrl('/path')
+      expected = (
+        document.location.protocol + '//' +
+        document.location.host +
+        '/path'
+      )
+      assert.equal(result, expected)

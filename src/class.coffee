@@ -37,6 +37,12 @@ class Delegator
     this.on = this.subscribe
     this.addEvents()
 
+  # Public: Destroy the instance, unbinding all events.
+  #
+  # Returns nothing.
+  destroy: ->
+    this.removeEvents()
+
   # Public: binds the function names in the @events Object to their events.
   #
   # The @events Object should be a set of key/value pairs where the key is the
@@ -56,8 +62,8 @@ class Delegator
   #   @options = {"form submit": "submitForm"}
   #
   #   # This will bind the updateAnnotationStore() method to the custom
-  #   # annotation:save event. NOTE: Because this is a custom event the 
-  #   # Delegator#subscribe() method will be used and updateAnnotationStore() 
+  #   # annotation:save event. NOTE: Because this is a custom event the
+  #   # Delegator#subscribe() method will be used and updateAnnotationStore()
   #   # will not recieve an event parameter like the previous two examples.
   #   @options = {"annotation:save": "updateAnnotationStore"}
   #

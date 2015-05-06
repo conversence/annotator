@@ -84,15 +84,15 @@ class Annotator.Plugin.Document extends Annotator.Plugin
     if @metadata.highwire.title
       @metadata.title = @metadata.highwire.title[0]
     else if @metadata.eprints.title
-      @metadata.title = @metadata.eprints.title
+      @metadata.title = @metadata.eprints.title[0]
     else if @metadata.prism.title
-      @metadata.title = @metadata.prism.title
+      @metadata.title = @metadata.prism.title[0]
     else if @metadata.facebook.title
-      @metadata.title = @metadata.facebook.title
+      @metadata.title = @metadata.facebook.title[0]
     else if @metadata.twitter.title
-      @metadata.title = @metadata.twitter.title
+      @metadata.title = @metadata.twitter.title[0]
     else if @metadata.dc.title
-      @metadata.title = @metadata.dc.title
+      @metadata.title = @metadata.dc.title[0]
     else
       @metadata.title = $("head title").text()
  
@@ -106,8 +106,17 @@ class Annotator.Plugin.Document extends Annotator.Plugin
       href = this._absoluteUrl(l.prop('href')) # get absolute url
       rel = l.prop('rel')
       type = l.prop('type')
-      if rel in ["alternate", "canonical", "bookmark"] and type not in ["application/rss+xml", "application/atom+xml"]
-        @metadata.link.push(href: href, rel: rel, type: type)
+      lang = l.prop('hreflang')
+
+      if rel not in ["alternate", "canonical", "bookmark", "shortlink"] then continue
+
+      if rel is 'alternate'
+        # Ignore feeds resources
+        if type and type.match /^application\/(rss|atom)\+xml/ then continue
+        # Ignore alternate languages
+        if lang then continue
+
+      @metadata.link.push(href: href, rel: rel, type: type)
 
     # look for links in scholar metadata
     for name, values of @metadata.highwire
@@ -143,7 +152,6 @@ class Annotator.Plugin.Document extends Annotator.Plugin
   # hack to get a absolute url from a possibly relative one
   
   _absoluteUrl: (url) ->
-    img = $("<img src='#{ url }'></img>")
-    url = img.prop('src')
-    img.prop('src', null)
-    return url
+    d = document.createElement('a')
+    d.href = url
+    d.href
