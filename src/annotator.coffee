@@ -736,13 +736,13 @@ class Annotator.Plugin extends Delegator
 g = Util.getGlobal()
 
 if not g.document?.evaluate?
-  $.getScript('http://assets.annotateit.org/vendor/xpath.min.js')
+  $.getScript('/static/js/lib/annotator/vendor/xpath.min.js')
 
 if not g.getSelection?
-  $.getScript('http://assets.annotateit.org/vendor/ierange.min.js')
+  $.getScript('/static/js/lib/annotator/vendor/ierange.min.js')
 
 if not g.JSON?
-  $.getScript('http://assets.annotateit.org/vendor/json2.min.js')
+  $.getScript('/static/js/lib/annotator/vendor/json2.min.js')
 
 # Ensure the Node constants are defined
 if not g.Node?
