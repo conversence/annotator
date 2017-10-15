@@ -277,7 +277,7 @@
         externals: {
           "jQuery":  root + "/static/js/bower/dist/jquery/jquery.min.js",
           "source":  root + "/static/js/lib/annotator/annotator-bookmarklet.min.js",
-          "styles":  root + "/static/css/lib/annotator.min.css"
+          "styles":  root + "/static/js/build/annotator_ext.css"
         },
         store: {
           prefix: root+"/api/v1/discussion/"+options["discussion"]+"/"
